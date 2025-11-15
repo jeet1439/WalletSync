@@ -6,9 +6,9 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { View, ActivityIndicator } from "react-native";
 
 import auth from "@react-native-firebase/auth";
-import Login from "./src/Login.jsx";
+import Login from "./src/Login.";
 import Details from "./src/Details";
-import Tabs from "./src/Navigaor/Tabs";
+import Tabs from "./src/Navigator/Tabs";
 
 const Stack = createStackNavigator();
 
