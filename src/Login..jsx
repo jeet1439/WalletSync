@@ -7,6 +7,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -17,33 +18,41 @@ export default function Login() {
   const [code, setCode] = useState('');
   const [confirm, setConfirm] = useState(null);
   const navigation = useNavigation();
+  const [codesent, setCodeSent] = useState(false);
 
   const signInWithPhoneNumber = async () => {
     try {
+      setCodeSent(true);
       const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
       setConfirm(confirmation);
+      setCodeSent(false);
     } catch (err) {
+      setCodeSent(false);
       console.log('Error sending code:', err);
     }
   };
 
   const confirmCode = async () => {
     try {
+      setCodeSent(true);
       const userCredential = await confirm.confirm(code);
       console.log(userCredential);
       const user = userCredential.user;
 
       const userDoc = await firestore().collection('users').doc(user.uid).get();
-
+      setCodeSent(false);
       if (userDoc.exists && userDoc.data()) {
       navigation.navigate("Dashboard");
       } else {
         navigation.navigate("Details", { uid: user.uid });
       }
+
     } catch (error) {
+      setCodeSent(false);
       console.log('Invalid code');
     }
   };
+
 
   return (
     <KeyboardAvoidingView
@@ -64,8 +73,18 @@ export default function Login() {
             onChangeText={setPhoneNumber}
           />
 
-          <TouchableOpacity style={styles.button} onPress={signInWithPhoneNumber}>
-            <Text style={styles.buttonText}>Send Code</Text>
+          <TouchableOpacity 
+          disabled={codesent}
+          style={styles.button} onPress={signInWithPhoneNumber}>
+            <Text style={styles.buttonText}>
+              {
+                codesent == true ? (                  
+                <ActivityIndicator
+                  size={'small'}
+                  color={'#fff'}
+                />) : 'Get Otp'
+              }
+            </Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -96,7 +115,16 @@ export default function Login() {
           />
 
           <TouchableOpacity style={styles.button} onPress={confirmCode}>
-            <Text style={styles.buttonText}>Verify</Text>
+            <Text style={styles.buttonText}>
+              {
+                codesent == true ? (
+                  <ActivityIndicator
+                  size={'small'}
+                  color={'#fff'}/>
+                ) : 
+                'Verify'
+              }
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => setConfirm(null)}>

@@ -1,29 +1,28 @@
+import React from 'react'
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
-
-export default function Dashboard() {
+const Home = () => {
 
   const handleSignOut = async () => {
     try {
-      await auth().signOut();
-      Alert.alert('Signed Out', 'You have been signed out successfully.');
+        await auth().signOut();
+        Alert.alert('Signed Out', 'You have been signed out successfully.');
     } catch (error) {
-      console.log('Error signing out:', error);
-      Alert.alert('Error', 'Failed to sign out. Please try again.');
+        console.log('Error signing out:', error);
+        Alert.alert('Error', 'Failed to sign out. Please try again.');
     }
   };
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Dashboard</Text>
-
-      <TouchableOpacity style={styles.button} onPress={handleSignOut}>
-        <Text style={styles.buttonText}>Sign Out</Text>
-      </TouchableOpacity>
-    </View>
-  );
+return (
+     <View style={styles.container}>
+         <Text style={styles.title}>Dashboard</Text>
+   
+         <TouchableOpacity style={styles.button} onPress={handleSignOut}>
+           <Text style={styles.buttonText}>Sign Out</Text>
+         </TouchableOpacity>
+       </View>
+)
 }
 
 const styles = StyleSheet.create({
@@ -57,3 +56,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+export default Home

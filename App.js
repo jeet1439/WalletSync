@@ -1,35 +1,58 @@
 import "react-native-gesture-handler";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
+import { View, ActivityIndicator } from "react-native";
 
-import Login from "./src/Login.";
+import auth from "@react-native-firebase/auth";
+import Login from "./src/Login.jsx";
 import Details from "./src/Details";
-import Dashboard from "./src/Dashboard";
+import Tabs from "./src/Navigaor/Tabs";
 
 const Stack = createStackNavigator();
 
-export default function App(){
-  return(
+export default function App() {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={{ 
+        flex: 1, 
+        justifyContent: "center",
+         alignItems: "center" ,
+         backgroundColor: '#0b051dff'
+         }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-          <Stack.Screen
-            name="Login"
-            component={Login}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Details"
-            component={Details}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Dashboard"
-            component={Dashboard}
-            options={{ headerShown: false }}
-          />
+      <Stack.Navigator
+        initialRouteName={user ? "Dashboard" : "Login"}
+        screenOptions={{ headerShown: false }}
+      >
+        {!user ? (
+          <>
+            <Stack.Screen name="Login" component={Login} />
+            <Stack.Screen name="Details" component={Details} />
+          </>
+        ) : (
+          <Stack.Screen name="Dashboard" component={Tabs} />
+        )}
       </Stack.Navigator>
     </NavigationContainer>
-  )
+  );
 }
