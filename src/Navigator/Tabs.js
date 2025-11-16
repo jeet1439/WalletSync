@@ -25,7 +25,7 @@ export default function Tabs() {
         marginTop: 5,
       },
         tabBarIcon: ({ focused }) => {
-          const color = focused ? "#fff" : "#582bb8ff";
+          const color = focused ? "#f5f5f5ff" : "#582bb8ff";
           const size = 28;
 
           switch (route.name) {
@@ -94,8 +94,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: -2, height: -2 },
     shadowOpacity: 0.002,
     shadowRadius: 10,
-
-    // Slight padding
     paddingTop: 4,
   },
 });
