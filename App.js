@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, ImageBackground, Text } from "react-native";
 
 import auth from "@react-native-firebase/auth";
 import Login from "./src/Login.";
@@ -17,26 +17,63 @@ export default function App() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
+  const unsubscribe = auth().onAuthStateChanged((currentUser) => {
+    setUser(currentUser);
+
+    setTimeout(() => {
       setLoading(false);
-    });
+    }, 2000);
+  });
 
-    return unsubscribe;
-  }, []);
+  return unsubscribe;
+}, []);
 
-  if (loading) {
-    return (
-      <View style={{ 
-        flex: 1, 
-        justifyContent: "center",
-         alignItems: "center" ,
-         backgroundColor: '#0b051dff'
-         }}>
-        <ActivityIndicator size="large" />
+if (loading) {
+  return (
+    <ImageBackground
+      source={require("./assets/images/splash.png")}
+      style={{
+        flex: 1,
+        width: "100%",
+        height: "100%",
+        justifyContent: "flex-end",  
+        alignItems: "center",
+      }}
+      resizeMode="cover"
+    >
+      <View
+        style={{
+          position: "absolute",
+          bottom: 100,  
+          alignItems: "center",
+        }}
+      >
+        <Text
+          style={{
+            color: "#fff",
+            fontSize: 48,
+            fontWeight: "500",
+            marginBottom: 8,
+            textAlign: "center",
+          }}
+        >
+          WalletSync
+        </Text>
+
+        <Text
+          style={{
+            color: "#d4d4d4",
+            fontSize: 20,
+            textAlign: "center",
+            width: "90%",
+          }}
+        >
+          Sync your finances effortlessly
+        </Text>
       </View>
-    );
-  }
+    </ImageBackground>
+  );
+}
 
   return (
     <NavigationContainer>

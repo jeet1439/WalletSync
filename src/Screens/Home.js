@@ -16,7 +16,7 @@ import auth from '@react-native-firebase/auth';
 import firestore from "@react-native-firebase/firestore";
 import { Ionicons } from '@expo/vector-icons';
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
 const CARD_DATA = [
   {
@@ -41,6 +41,67 @@ const CARD_DATA = [
     image: require('../../assets/images/customCard.png'),
   },
 ];
+
+const TRANSACTION_DATA = [
+  {
+    id: "1",
+    name: "Zomato",
+    type: "Purchase",
+    amount: "-₹420.00",
+    time: "Today, 10:10 AM",
+    icon: require("../../assets/images/zomatto.png"),
+  },
+  {
+    id: "2",
+    name: "Electricity Bill",
+    type: "Bill Payment",
+    amount: "-₹1,250.00",
+    time: "Today, 9:00 AM",
+    icon: require("../../assets/images/bill.png"),
+  },
+  {
+    id: "3",
+    name: "chinease dhaba",
+    type: "Purchase",
+    amount: "-₹99.00",
+    time: "20-11-2025, 6:00 PM",
+    icon: require("../../assets/images/food.png"),
+  },
+  {
+    id: "4",
+    name: "Metro Tickit",
+    type: "Travel expence",
+    amount: "-₹19.75",
+    time: "18-11-2025, 9:00 AM",
+    icon: require("../../assets/images/metro.png"),
+  },
+  {
+    id: "5",
+    name: "Hotel booking",
+    type: "Room book",
+    amount: "-₹2100.00",
+    time: "16-11-2025, 7:00 PM",
+    icon: require("../../assets/images/hotel.png"),
+  },
+];
+
+const TransactionItem = ({ item }) => (
+  <View style={styles.transactionItem}>
+    <Image source={item.icon} style={styles.transactionIcon} />
+
+    <View style={{ flex: 1 }}>
+      <Text style={styles.transactionName}>{item.name}</Text>
+      <Text style={styles.transactionType}>{item.type}</Text>
+    </View>
+
+    <View style={{ alignItems: "flex-end" }}>
+      <Text style={styles.transactionAmount}>{item.amount}</Text>
+      <Text style={styles.transactionTime}>{item.time}</Text>
+    </View>
+  </View>
+);
+
+
 
 const CardItem = ({ item }) => (
   <ImageBackground
@@ -136,10 +197,14 @@ const Home = () => {
         <Ionicons name="chevron-down" size={16} color="#aaa" style={{ marginLeft: 5 }} />
       </TouchableOpacity>
     </View>
-      <Text>Hi</Text>
-      <Text>Hi</Text>
-      <Text>Hi</Text>
-      <Text>Hi</Text>
+      <FlatList
+        data={TRANSACTION_DATA}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <TransactionItem item={item} />}
+        showsVerticalScrollIndicator={false}
+        style={{marginBottom: height * 0.10}}
+      />
+
      </View>
 
     </View>
@@ -282,7 +347,44 @@ transactionHeader: {
     color: '#b6b6b6ff',
     fontSize: 14,
     fontWeight: '500',
-  }
+  },
+  transactionItem: {
+  flexDirection: "row",
+  alignItems: "center",
+  marginBottom: 18,
+},
+
+transactionIcon: {
+  width: 40,
+  height: 40,
+  borderRadius: 10,
+  marginRight: 15,
+},
+
+transactionName: {
+  color: "#fff",
+  fontSize: 16,
+  fontWeight: "600",
+},
+
+transactionType: {
+  color: "#b6b6b6",
+  fontSize: 13,
+  marginTop: 3,
+},
+
+transactionAmount: {
+  color: "#ff6b6b",
+  fontWeight: "700",
+  fontSize: 16,
+},
+
+transactionTime: {
+  color: "#b6b6b6",
+  fontSize: 12,
+  marginTop: 3,
+},
+
 });
 
 export default Home;
