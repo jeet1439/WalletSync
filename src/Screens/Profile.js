@@ -68,11 +68,6 @@ const Profile = () => {
           <Text style={styles.rowLabel}>Theme</Text>
           <Text style={styles.rowValue}>Dark</Text>
         </TouchableOpacity>
-
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Push notifications</Text>
-          <Switch value={true} thumbColor="#7F00FF" />
-        </View>
       </View>
 
       {/* Card Settings */}
@@ -142,7 +137,7 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: "#16112b",
+    backgroundColor: "rgba(28, 14, 53, 0.85)",
     padding: 18,
     borderRadius: 16,
     marginTop: 25,
