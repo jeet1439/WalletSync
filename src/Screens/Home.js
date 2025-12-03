@@ -9,6 +9,8 @@ import {
   ImageBackground,
   Dimensions,
   FlatList,
+  Modal,
+  TextInput
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -129,8 +131,12 @@ const CardItem = ({ item }) => (
 
 const Home = () => {
   const [name, setName] = useState("");
-  const navigation = useNavigation();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [type, setType] = useState("credit");
 
+  const navigation = useNavigation();
+   
   useEffect(() => {
     const uid = auth().currentUser.uid;
 
@@ -173,7 +179,7 @@ const Home = () => {
       </View>
       <View style={styles.overviewSection}>
         <Text style={styles.overviewTitle}>Overview</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
           <Text style={styles.overviewButton}>Add new +</Text>
         </TouchableOpacity>
       </View>
@@ -204,9 +210,75 @@ const Home = () => {
         showsVerticalScrollIndicator={false}
         style={{marginBottom: height * 0.10}}
       />
-
      </View>
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+      >
+        <View style={styles.modalWrapper}>
+          <View style={styles.modalBox}>          
+           <View style={{ 
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginBottom: 15 }}>
+            <Text style={styles.modalTitle}>Add Record</Text>
+            <View style={styles.toggleWrapper}>
+                <TouchableOpacity
+                  onPress={() => setType("credit")}
+                  style={[styles.sliderOption, type === "credit" && styles.activeSlide]}
+                >
+                  <Text style={[styles.sliderText, type === "credit" && styles.sliderTextActive]}>
+                    Credit
+                  </Text>
+                </TouchableOpacity>
 
+                <TouchableOpacity
+                  onPress={() => setType("debit")}
+                  style={[styles.sliderOption, type === "debit" && styles.activeSlide]}
+                >
+                  <Text style={[styles.sliderText, type === "debit" && styles.sliderTextActive]}>
+                    Debit
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            {/* Amount Input */}
+            <TextInput
+              placeholder="Enter amount"
+              placeholderTextColor="#ccc"
+              style={styles.input}
+              keyboardType="numeric"
+              value={amount}
+              onChangeText={setAmount}
+            />
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={styles.cancelBtn}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => {
+                  if (!amount) {
+                    Alert.alert("Please enter amount");
+                    return;
+                  }
+                  Alert.alert(`Added ${type} of ₹${amount}`);
+                  setAmount("");
+                  setModalVisible(false);
+                }}
+                style={styles.saveBtn}
+              >
+                <Text style={styles.saveText}>Save</Text>
+              </TouchableOpacity>
+
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -383,6 +455,108 @@ transactionTime: {
   color: "#b6b6b6",
   fontSize: 12,
   marginTop: 3,
+},
+modalWrapper: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "rgba(0,0,0,0.5)",
+},
+
+modalBox: {
+  width: "85%",
+  backgroundColor: "#1c0e35",
+  padding: 20,
+  borderRadius: 15,
+  elevation: 10,
+  borderWidth: 1,
+  borderColor: "rgba(255,255,255,0.2)",
+},
+titleContainer: {
+  height: 40,          // adjust as needed
+  justifyContent: "center",
+  alignItems: "center",
+  marginBottom: 10,
+},
+modalTitle: {
+  fontSize: 20,
+  fontWeight: "700",
+  color: "#fff",
+  paddingVertical: '7',
+  textAlign: "center",
+},
+
+input: {
+  backgroundColor: "#381A65",
+  padding: 12,
+  color: "#fff",
+  fontSize: 16,
+  borderRadius: 10,
+  marginBottom: 18,
+},
+
+buttonRow: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+},
+
+cancelBtn: {
+  flex: 1,
+  backgroundColor: "#555",
+  paddingVertical: 12,
+  borderRadius: 10,
+  alignItems: "center",
+  marginRight: 10,
+},
+
+saveBtn: {
+  flex: 1,
+  backgroundColor: "#6b4ce6",
+  paddingVertical: 12,
+  borderRadius: 10,
+  alignItems: "center",
+  marginLeft: 10,
+},
+
+cancelText: {
+  color: "#fff",
+  fontSize: 16,
+},
+
+saveText: {
+  color: "#fff",
+  fontSize: 16,
+  fontWeight: "700",
+},
+toggleWrapper: {
+  flexDirection: "row",
+  backgroundColor: "#2d1750",
+  padding: 4,
+  borderRadius: 20,
+  width: 140,
+  justifyContent: "space-between",
+},
+
+sliderOption: {
+  flex: 1,
+  paddingVertical: 8,
+  borderRadius: 20,
+  alignItems: "center",
+},
+
+activeSlide: {
+  backgroundColor: "#6b4ce6",
+},
+
+sliderText: {
+  color: "#b6b6b6",
+  fontSize: 14,
+  fontWeight: "600",
+},
+
+sliderTextActive: {
+  color: "#fff",
+  fontWeight: "700",
 },
 
 });

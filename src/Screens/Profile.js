@@ -9,6 +9,7 @@ import { useNavigation } from "@react-navigation/native";
 
 const Profile = () => {
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const user = auth().currentUser;
   const navgation = useNavigation();
 
@@ -21,6 +22,7 @@ const Profile = () => {
       .then(doc => {
         if (doc.exists) {
           setName(doc.data().username);
+          setEmail(doc.data().email);
         }
       });
   }, []);
@@ -45,14 +47,16 @@ const Profile = () => {
         <Text style={styles.headerText}>Profile</Text>
         <Ionicons name="pencil" size={22} color="#fff" />
       </View>
-      {/* Profile Section */}
+      
       <View style={{ alignItems: "center", marginTop: 20 }}>
+      <TouchableOpacity>
         <Image 
           source={{ uri: user.photoURL || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuNhTZJTtkR6b-ADMhmzPvVwaLuLdz273wvQ&s" }}
           style={styles.avatar}
         />
+        </TouchableOpacity>
         <Text style={styles.name}>{name || "Loading..."}</Text>
-        <Text style={styles.email}>{user.email}</Text>
+        <Text style={styles.email}>{email}</Text>
       </View>
 
       {/* General Settings */}

@@ -40,7 +40,7 @@ const Settings = () => {
     try {
       await auth().signOut();
       Alert.alert("Signed Out", "You have been signed out successfully.");
-      navigation.replace("Login");
+      // navigation.replace("Login");
     } catch (error) {
       console.log(error);
     }
@@ -48,10 +48,8 @@ const Settings = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <Text style={styles.header}>Settings</Text>
 
-      {/* Profile Section */}
       <View style={styles.profileCard}>
         <Image
           source={{
