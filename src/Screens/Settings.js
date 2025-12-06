@@ -77,7 +77,7 @@ const Settings = () => {
           <Switch
             value={notifications}
             onValueChange={setNotifications}
-            thumbColor="#6a4cff"
+            thumbColor="#7F00FF"
           />
         </View>
 
@@ -89,7 +89,7 @@ const Settings = () => {
           <Switch
             value={darkMode}
             onValueChange={setDarkMode}
-            thumbColor="#6a4cff"
+            thumbColor="#7F00FF"
           />
         </View>
       </View>

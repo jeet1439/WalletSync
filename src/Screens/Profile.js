@@ -10,21 +10,29 @@ import { useNavigation } from "@react-navigation/native";
 const Profile = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [autoRead, setAutoRead] = useState(true)
   const user = auth().currentUser;
   const navgation = useNavigation();
 
-  useEffect(() => {
+   useEffect(() => {
+    const user = auth().currentUser;
+    if (!user) return;
+
     const uid = user.uid;
-    firestore()
+
+    const unsubscribe = firestore()
       .collection("users")
       .doc(uid)
-      .get()
-      .then(doc => {
-        if (doc.exists) {
+      .onSnapshot(doc => {
+        if (doc && doc.exists) {
           setName(doc.data().username);
-          setEmail(doc.data().email);
+          setEmail(doc.data().email)
+        } else {
+          console.log("User document does not exist");
         }
       });
+
+    return unsubscribe;
   }, []);
 
   const handleSignOut = async () => {
@@ -89,8 +97,11 @@ const Profile = () => {
         </TouchableOpacity>
 
         <View style={styles.row}>
-          <Text style={styles.rowLabel}>Allow transaction</Text>
-          <Switch value={false} thumbColor="#7F00FF" />
+          <Text style={styles.rowLabel}>Auto read transactions</Text>
+          <Switch 
+          value={autoRead}
+          onValueChange={setAutoRead}
+          thumbColor="#7F00FF" />
         </View>
         <TouchableOpacity style={styles.row} onPress={handleSignOut}>
           <Text style={styles.rowLabel}>Sign out</Text>
