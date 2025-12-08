@@ -273,10 +273,9 @@ const Home = () => {
     console.log(error);
     showAlert("error", "Something went wrong!");
   }
-};
+  };
 
 
-  
   const fetchMonthlyRecords = () => {
   try {
     const user = auth().currentUser;
@@ -338,14 +337,14 @@ const Home = () => {
     console.log(error);
     showAlert("error", "Something went wrong!");
   }
-};
-
-
+  };
 
   useEffect(()=>{
     fetchMonthlyRecords();
     fetchRecords();
   }, [auth().currentUser])
+
+
   return (
     <View style={styles.container}>
 

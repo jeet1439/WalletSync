@@ -1,95 +1,234 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import auth from '@react-native-firebase/auth'; 
+import firestore, { Timestamp } from "@react-native-firebase/firestore";
+import { Alert } from 'react-native'; 
+
+
+const getWeekOfMonth = (date) => {
+    const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const day = date.getDate();
+    return Math.ceil(day / 7);
+};
+
+const showSimpleAlert = (msg) => {
+    Alert.alert("Analytics Error", msg);
+};
+
 
 const Analetics = () => {
-  const [activeTab, setActiveTab] = useState("Monthly");
+    const [activeTab, setActiveTab] = useState("Monthly");
+    const [analyticsData, setAnalyticsData] = useState({
+        Weekly: { labels: [], values: [] },
+        Monthly: { labels: [], values: [] },
+        Yearly: { labels: [], values: [] },
+    });
 
-  const dataSet = {
-    Weekly: {
-      labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-      values: [200, 350, 150, 400, 250, 300, 180]
-    },
-    Monthly: {
-      labels: ["W1", "W2", "W3", "W4"],
-      values: [1200, 900, 1500, 1100]
-    },
-    Yearly: {
-      labels: ["2022", "2023", "2024", "2025"],
-      values: [15000, 18000, 22000, 17000]
-    }
-  };
+    const aiInsights = {
+        Weekly: "Spending data is loading...",
+        Monthly: "Spending data is loading...",
+        Yearly: "Spending data is loading...",
+    };
 
-  // Dynamic AI Text based on the active tab
-  const aiInsights = {
-    Weekly: "Spending peaked on Thursday. You are 12% below your weekly budget limit. Great job!",
-    Monthly: "Week 3 saw higher utility costs than usual. Consider reviewing your recurring subscriptions.",
-    Yearly: "2024 was your highest spending year. Current trends show a 15% reduction in 2025 expenses."
-  };
 
-  const chart = dataSet[activeTab];
-  const maxValue = Math.max(...chart.values);
-  const total = chart.values.reduce((a, b) => a + b, 0);
+    const fetchAnalyticsData = () => {
+        const user = auth().currentUser;
+        if (!user) {
+            showSimpleAlert("User not authenticated. Please log in.");
+            return;
+        }
 
-  return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Analytics</Text>
+        const uid = user.uid;
+        const currentYear = new Date().getFullYear().toString();
 
-      {/* Tabs */}
-      <View style={styles.tabRow}>
-        {["Weekly", "Monthly", "Yearly"].map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            onPress={() => setActiveTab(tab)}
-            style={[styles.tab, activeTab === tab && styles.activeTab]}
-          >
-            <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
-              {tab}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+        try {
+            // Fetch all records for the current year
+            firestore()
+                .collection("records")
+                .doc(uid)
+                .collection(currentYear)
+                .onSnapshot(snapshot => {
+                    const records = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        amount: Number(doc.data().amount),
+                        date: doc.data().timestamp.toDate(), 
+                    }))
+                    .filter(item => item.type === "debit");
 
-      {/* Chart */}
-      <Text style={styles.chartTitle}>Total Expenditure – {activeTab}</Text>
+                    const processedData = processRecordsForAnalytics(records);
+                    setAnalyticsData(processedData);
 
-      <View style={styles.chartContainer}>
-        {chart.values.map((value, index) => (
-          <View key={index} style={styles.barColumn}>
-            <View
-              style={[
-                styles.bar,
-                { height: (value / maxValue) * 150 }, // Scale bar
-              ]}
-            />
-            <Text style={styles.barLabel}>{chart.labels[index]}</Text>
-          </View>
-        ))}
-      </View>
+                }, (error) => {
+                    console.log("Firestore fetch error:", error);
+                    showSimpleAlert("Failed to fetch analytics data.");
+                });
 
-      {/* Summary Card */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Total Spending</Text>
-        <Text style={styles.cardValue}>₹ {total}</Text>
-      </View>
+        } catch (error) {
+            console.log(error);
+            showSimpleAlert("Something went wrong during data retrieval.");
+        }
+    };
 
-      {/* --- NEW AI REVIEW BOX --- */}
-      <View style={styles.aiContainer}>
-        <View style={styles.aiHeaderRow}>
-          <Text style={styles.aiIcon}>✨</Text>
-          <Text style={styles.aiTitle}>AI Review</Text>
-        </View>
-        <Text style={styles.aiBody}>
-          {aiInsights[activeTab]}
-        </Text>
-      </View>
-      {/* ------------------------- */}
-      
-      {/* Bottom padding for scrolling */}
-      <View style={{height: 40}} /> 
+    const processRecordsForAnalytics = (records) => {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
 
-    </ScrollView>
-  );
+        const yearlyDataMap = {};
+        records.forEach(item => {
+            const year = item.date.getFullYear().toString();
+            yearlyDataMap[year] = (yearlyDataMap[year] || 0) + item.amount;
+        });
+
+        const sortedYears = Object.keys(yearlyDataMap).sort();
+        const yearly = {
+            labels: sortedYears,
+            values: sortedYears.map(year => yearlyDataMap[year]),
+        };
+
+        const monthlyDataMap = {};
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        records.filter(item => item.date.getFullYear() === currentYear)
+               .forEach(item => {
+                   const monthIndex = item.date.getMonth();
+                   const month = monthNames[monthIndex];
+                   monthlyDataMap[month] = (monthlyDataMap[month] || 0) + item.amount;
+               });
+        
+        const monthly = {
+            labels: monthNames,
+            values: monthNames.map(month => monthlyDataMap[month] || 0),
+        };
+
+        const weeklyDataMap = {};
+        records.filter(item => 
+            item.date.getFullYear() === currentYear && item.date.getMonth() === currentMonth
+        ).forEach(item => {
+            const week = getWeekOfMonth(item.date); // 1, 2, 3, or 4
+            weeklyDataMap[week] = (weeklyDataMap[week] || 0) + item.amount;
+        });
+
+        const weeklyLabels = ["W1", "W2", "W3", "W4"];
+        const weekly = {
+            labels: weeklyLabels,
+            values: weeklyLabels.map((_, index) => weeklyDataMap[index + 1] || 0),
+        };
+
+        return { Weekly: weekly, Monthly: monthly, Yearly: yearly };
+    };
+
+
+    useEffect(() => {
+        fetchAnalyticsData();
+    }, []); 
+
+    const chart = analyticsData[activeTab]; 
+    const maxValue = chart.values.length > 0 ? Math.max(...chart.values) : 1;
+    const total = chart.values.reduce((a, b) => a + b, 0);
+
+
+    const getAiInsight = (tab) => {
+        
+        const now = new Date(); 
+
+        const data = analyticsData[tab];
+        if (!data || data.values.length === 0 || total === 0) return "No sufficient data to generate insights yet.";
+
+        if (tab === "Monthly") {
+            const currentMonthTotal = data.values[now.getMonth()]; 
+            const average = data.values.reduce((sum, val) => sum + val, 0) / data.values.length;
+            
+            if (currentMonthTotal > average * 1.2) {
+                return `Your current month's spending (${currentMonthTotal}) is significantly above your yearly monthly average. Consider a review!`;
+            }
+            return `Your monthly expenditure is tracking well. Keep monitoring your progress.`;
+        }
+
+        if (tab === "Weekly") {
+            const weekIndex = data.values.indexOf(maxValue);
+            const peakLabel = data.labels[weekIndex];
+            return `Peak spending was observed in ${peakLabel} with an amount of ₹${maxValue}.`;
+        }
+
+        if (tab === "Yearly") {
+            const latestYearTotal = data.values[data.values.length - 1];
+            const previousYearTotal = data.values[data.values.length - 2] || latestYearTotal;
+            const change = previousYearTotal === 0 ? 0 : ((latestYearTotal - previousYearTotal) / previousYearTotal) * 100;
+
+            if (change > 5) {
+                return `Expenditure increased by ${change.toFixed(1)}% compared to the previous year. You might be spending more!`;
+            } else if (change < -5) {
+                 return `Expenditure decreased by ${Math.abs(change).toFixed(1)}% compared to the previous year. Great savings!`;
+            }
+            return `Your yearly expenditure is stable, showing only a ${change.toFixed(1)}% change from last year.`;
+        }
+        return "Insight generation failed.";
+    };
+
+
+    return (
+        <ScrollView style={styles.container}>
+            <View style={styles.headerContainer}>
+              <Text style={styles.header}>Analytics</Text>
+              <Image source={require('../../assets/images/graph.png')} style={styles.customIcon} />
+            </View>
+
+            <View style={styles.tabRow}>
+                {["Weekly", "Monthly", "Yearly"].map((tab) => (
+                    <TouchableOpacity
+                        key={tab}
+                        onPress={() => setActiveTab(tab)}
+                        style={[styles.tab, activeTab === tab && styles.activeTab]}
+                    >
+                        <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+                            {tab}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+            <View style={{ marginBottom: 10 }}>
+                <Text style={styles.chartTitle}>Total Expenditure - {activeTab}</Text>
+            </View>
+            
+            <View style={styles.chartContainer}>
+                {chart.labels.map((label, index) => {
+                    const value = chart.values[index];
+                    return (
+                        <View key={index} style={styles.barColumn}>
+                            <View
+                                style={[
+                                    styles.bar,
+                                    { height: (value / maxValue) * 150 }, // Scale bar height
+                                ]}
+                            />
+                            <Text style={styles.barLabel}>{label}</Text>
+                        </View>
+                    )
+                })}
+            </View>
+            
+            <View style={styles.card}>
+                <Text style={styles.cardTitle}>Total Spending ({activeTab})</Text>
+                <Text style={styles.cardValue}>₹ {total.toFixed(2)}</Text>
+            </View>
+
+            <View style={styles.aiContainer}>
+                <View style={styles.aiHeaderRow}>
+                    <Text style={styles.aiIcon}>✨</Text>
+                    <Text style={styles.aiTitle}>AI Review</Text>
+                </View>
+                <Text style={styles.aiBody}>
+                    {getAiInsight(activeTab)}
+                </Text>
+            </View>
+            <View style={{height: 40}} /> 
+
+        </ScrollView>
+    );
 };
+
+
 
 export default Analetics;
 
@@ -100,13 +239,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 40,
   },
-
-  header: {
-    color: "#fff",
-    fontSize: 28,
-    fontWeight: "700",
+headerContainer: {
+  flexDirection: 'row',
+  gap: 5,
+  // justifyContent: 'center', 
+  alignItems: 'center', 
   },
-
+  customIcon: {
+      height: 45,
+      width: 45
+  },
+  header: {
+      color: "#fff",
+      fontSize: 28,
+      fontWeight: "700",
+  },
   tabRow: {
     flexDirection: "row",
     backgroundColor: "#1c1533",
