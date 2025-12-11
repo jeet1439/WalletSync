@@ -6,15 +6,23 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { View, ActivityIndicator, ImageBackground, Text } from "react-native";
 
 import auth from "@react-native-firebase/auth";
-import Login from "./src/Login.";
+import Login from "./src/Login";
 import Details from "./src/Details";
 import Tabs from "./src/Navigator/Tabs";
 
+
+
+import UserProvider from "./src/context/UserContext";
+import { UserContext } from "./src/context/UserContext";
+import Privacy from "./src/Screens/Privacy";
+
+
 const Stack = createStackNavigator();
 
-export default function App() {
+function MainApp () {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+ 
 
   useEffect(() => {
   const unsubscribe = auth().onAuthStateChanged((currentUser) => {
@@ -89,7 +97,21 @@ if (loading) {
         ) : (
           <Stack.Screen name="Dashboard" component={Tabs} />
         )}
+        <Stack.Screen 
+        name="Privacy" 
+        component={Privacy} 
+        options={{ headerShown: false }} 
+      />
       </Stack.Navigator>
     </NavigationContainer>
   );
+} 
+
+export default function App() {
+  return (
+    <UserProvider>
+      <MainApp />
+    </UserProvider>
+  );
 }
+

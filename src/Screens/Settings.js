@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -12,29 +12,15 @@ import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { UserContext } from "../context/UserContext";
 
 const Settings = () => {
   const navigation = useNavigation();
-  const [userData, setUserData] = useState(null);
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
-
+  const { userData } = useContext(UserContext);
   // Fetch user data
   const user = auth().currentUser;
-
-  useEffect(() => {
-    const uid = user.uid;
-    firestore()
-      .collection("users")
-      .doc(uid)
-      .get()
-      .then(doc => {
-        if (doc.exists) {
-          setUserData(doc.data());
-        }
-      });
-  }, []);
- 
 
   const handleSignOut = async () => {
     try {
@@ -52,11 +38,7 @@ const Settings = () => {
 
       <View style={styles.profileCard}>
         <Image
-          source={{
-            uri:
-              userData?.profileImage ||
-              "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-          }}
+            source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuNhTZJTtkR6b-ADMhmzPvVwaLuLdz273wvQ&s' }}
           style={styles.avatar}
         />
         <View>
@@ -98,15 +80,20 @@ const Settings = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
 
-        <TouchableOpacity style={styles.row}>
+        <TouchableOpacity
+        onPress={() => navigation.navigate('Profile')}
+         style={styles.row}>
           <View style={styles.rowLeft}>
             <Ionicons name="person" size={22} color="#f1f1f1ff" />
+            
             <Text style={styles.rowText}>Edit Profile</Text>
           </View>
           <Ionicons name="chevron-forward" size={22} color="#f1f1f1ff" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.row}>
+        <TouchableOpacity 
+         onPress={() => navigation.navigate('Privacy')}
+        style={styles.row}>
           <View style={styles.rowLeft}>
             <Ionicons name="shield-checkmark" size={22} color="#f1f1f1ff" />
             <Text style={styles.rowText}>Privacy & Security</Text>

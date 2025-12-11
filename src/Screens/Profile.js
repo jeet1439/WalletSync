@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { 
   View, Text, StyleSheet, TouchableOpacity, Image, Switch 
 } from "react-native";
@@ -6,34 +6,18 @@ import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { UserContext } from "../context/UserContext";
 
 const Profile = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [autoRead, setAutoRead] = useState(true)
   const user = auth().currentUser;
+  const { userData } = useContext(UserContext);
+
   const navgation = useNavigation();
-
-   useEffect(() => {
-    const user = auth().currentUser;
-    if (!user) return;
-
-    const uid = user.uid;
-
-    const unsubscribe = firestore()
-      .collection("users")
-      .doc(uid)
-      .onSnapshot(doc => {
-        if (doc && doc.exists) {
-          setName(doc.data().username);
-          setEmail(doc.data().email)
-        } else {
-          console.log("User document does not exist");
-        }
-      });
-
-    return unsubscribe;
-  }, []);
+  
+  
 
   const handleSignOut = async () => {
     try {
@@ -59,12 +43,12 @@ const Profile = () => {
       <View style={{ alignItems: "center", marginTop: 20 }}>
       <TouchableOpacity>
         <Image 
-          source={{ uri: user.photoURL || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuNhTZJTtkR6b-ADMhmzPvVwaLuLdz273wvQ&s" }}
+          source={{ uri: user?.photoURL || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuNhTZJTtkR6b-ADMhmzPvVwaLuLdz273wvQ&s" }}
           style={styles.avatar}
         />
         </TouchableOpacity>
-        <Text style={styles.name}>{name || "Loading..."}</Text>
-        <Text style={styles.email}>{email}</Text>
+        <Text style={styles.name}>{userData?.username || "Loading..."}</Text>
+        <Text style={styles.email}>{userData?.email}</Text>
       </View>
 
       {/* General Settings */}

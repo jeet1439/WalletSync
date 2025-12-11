@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -18,77 +18,12 @@ import auth from '@react-native-firebase/auth';
 import firestore, { Timestamp } from "@react-native-firebase/firestore";
 import { Ionicons } from '@expo/vector-icons';
 import CustomAlert from '../Components/CustomAlert';
+import { UserContext } from '../context/UserContext';
 
 
 
 const { width, height } = Dimensions.get("window");
 
-const CARD_DATA = [
-  {
-    id: '1',
-    month: 'November',
-    debit: '₹5000',
-    credit: '₹8500',
-    image: require('../../assets/images/customCard.png'),
-  },
-  {
-    id: '2',
-    month: 'October',
-    debit: '₹7200',
-    credit: '₹6100',
-    image: require('../../assets/images/customCard.png'),
-  },
-  {
-    id: '3',
-    month: 'September',
-    debit: '₹4300',
-    credit: '₹9200',
-    image: require('../../assets/images/customCard.png'),
-  },
-];
-
-const TRANSACTION_DATA = [
-  {
-    id: "1",
-    name: "Zomato",
-    type: "Purchase",
-    amount: "-₹420.00",
-    time: "Today, 10:10 AM",
-    icon: require("../../assets/images/zomatto.png"),
-  },
-  {
-    id: "2",
-    name: "Electricity Bill",
-    type: "Bill Payment",
-    amount: "-₹1,250.00",
-    time: "Today, 9:00 AM",
-    icon: require("../../assets/images/bill.png"),
-  },
-  {
-    id: "3",
-    name: "chinease dhaba",
-    type: "Purchase",
-    amount: "-₹99.00",
-    time: "20-11-2025, 6:00 PM",
-    icon: require("../../assets/images/food.png"),
-  },
-  {
-    id: "4",
-    name: "Metro Tickit",
-    type: "Travel expence",
-    amount: "-₹19.75",
-    time: "18-11-2025, 9:00 AM",
-    icon: require("../../assets/images/metro.png"),
-  },
-  {
-    id: "5",
-    name: "Hotel booking",
-    type: "Room book",
-    amount: "-₹2100.00",
-    time: "16-11-2025, 7:00 PM",
-    icon: require("../../assets/images/hotel.png"),
-  },
-];
 
 const REASONS = ["Tickets", "Food", "Clothes", "Other"];
 
@@ -164,7 +99,6 @@ const CardItem = ({ item }) => (
 );
 
 const Home = () => {
-  const [name, setName] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [amount, setAmount] = useState("");
   const [type, setType] = useState("credit");
@@ -175,33 +109,17 @@ const Home = () => {
   const [records, setRecords] = useState([]);
   
   const [cardData, setCardData] = useState([]);
+  
+  const [filterType, setFilterType] = useState("month");  
+
 
   const navigation = useNavigation();
   const [alert, setAlert] = useState(null);
+  const { userData } = useContext(UserContext);
 
   const showAlert = (type, msg) => {
     setAlert({ type, msg });
   };
-
-  useEffect(() => {
-    const user = auth().currentUser;
-    if (!user) return;
-
-    const uid = user.uid;
-
-    const unsubscribe = firestore()
-      .collection("users")
-      .doc(uid)
-      .onSnapshot(doc => {
-        if (doc && doc.exists) {
-          setName(doc.data().username);
-        } else {
-          console.log("User document does not exist");
-        }
-      });
-
-    return unsubscribe;
-  }, []);
 
   const saveRecords = async () => {
     if (!amount) {
@@ -240,58 +158,76 @@ const Home = () => {
   const fetchRecords = () => {
   try {
     const user = auth().currentUser;
-    if (!user) {
-      showAlert("error", "Something went wrong!");
-      return;
-    }
+    if (!user) return () => {};
 
     const uid = user.uid;
 
     const now = new Date();
     const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth(); 
-    const startOfMonth = new Date(currentYear, currentMonth, 1);
-    const startOfNextMonth = new Date(currentYear, currentMonth + 1, 1);
 
-    firestore()
+    let startDate;
+    let endDate;
+
+    if (filterType === "week") {
+     
+      const day = now.getDay(); 
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      startDate = new Date(now.setDate(diff));
+      startDate.setHours(0, 0, 0, 0);
+
+      
+      endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 7);
+    } else {
+     
+      const month = now.getMonth();
+      startDate = new Date(currentYear, month, 1);
+      endDate = new Date(currentYear, month + 1, 1);
+    }
+
+    return firestore()
       .collection("records")
       .doc(uid)
       .collection(currentYear.toString())
-      .where("timestamp", ">=", startOfMonth)
-      .where("timestamp", "<", startOfNextMonth)
+      .where("timestamp", ">=", startDate)
+      .where("timestamp", "<", endDate)
       .orderBy("timestamp", "desc")
       .onSnapshot(snapshot => {
+        if (!snapshot) return;
+
         const list = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
         }));
 
         setRecords(list);
-        // console.log(list);
       });
+
   } catch (error) {
     console.log(error);
     showAlert("error", "Something went wrong!");
   }
-  };
+};
+
+
 
 
   const fetchMonthlyRecords = () => {
   try {
     const user = auth().currentUser;
-    if (!user) {
-      showAlert("error", "Something went wrong!");
-      return;
-    }
+    if (!user) return () => {};
 
     const uid = user.uid;
     const currentYear = new Date().getFullYear().toString();
 
-    firestore()
+    return firestore()
       .collection("records")
       .doc(uid)
       .collection(currentYear)
       .onSnapshot(snapshot => {
+
+        if (!snapshot) return;  // <---
+
         const records = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
@@ -299,13 +235,14 @@ const Home = () => {
 
         const monthlyData = {};
         const monthNames = [
-          "January", "February", "March", "April", "May", "June",
-          "July", "August", "September", "October", "November", "December"
+          "January","February","March","April","May","June",
+          "July","August","September","October","November","December"
         ];
 
         records.forEach(item => {
-          const date = item.timestamp.toDate(); // Firestore timestamp
-          const month = monthNames[date.getMonth()]; // Get month name
+          if (!item.timestamp) return;
+          const date = item.timestamp.toDate();
+          const month = monthNames[date.getMonth()];
 
           if (!monthlyData[month]) {
             monthlyData[month] = { debit: 0, credit: 0 };
@@ -318,7 +255,6 @@ const Home = () => {
           }
         });
 
-        // Convert to array in CARD_DATA format and sort by month (latest first)
         const cardArray = Object.keys(monthlyData)
           .map((month, index) => ({
             id: (index + 1).toString(),
@@ -330,19 +266,26 @@ const Home = () => {
           .sort((a, b) => monthNames.indexOf(b.month) - monthNames.indexOf(a.month));
 
         setCardData(cardArray);
-        console.log(cardArray);
       });
 
   } catch (error) {
     console.log(error);
     showAlert("error", "Something went wrong!");
   }
-  };
+};
 
-  useEffect(()=>{
-    fetchMonthlyRecords();
-    fetchRecords();
-  }, [auth().currentUser])
+
+useEffect(() => {
+  const unsub1 = fetchRecords();
+  const unsub2 = fetchMonthlyRecords();
+
+  return () => {
+    if (unsub1) unsub1();
+    if (unsub2) unsub2();
+  };
+}, [auth().currentUser, filterType]);
+
+
 
 
   return (
@@ -358,7 +301,7 @@ const Home = () => {
           </TouchableOpacity>
           <View>
             <Text style={styles.helloText}>Hello,</Text>
-            <Text style={styles.nameText}>{name} !</Text>
+            <Text style={styles.nameText}>{userData?.username} </Text>
           </View>
         </View>
         <View style={styles.iconRow}>
@@ -392,10 +335,15 @@ const Home = () => {
       <View style={styles.transactionContainer}>
         <View style={styles.transactionHeader}>
           <Text style={styles.historyTitle}>Transactions</Text>
-          <TouchableOpacity style={styles.lastWeekButton}>
-            <Text style={styles.lastWeekText}>This month</Text>
-            <Ionicons name="chevron-down" size={16} color="#aaa" style={{ marginLeft: 5 }} />
-          </TouchableOpacity>
+          <TouchableOpacity 
+              style={styles.lastWeekButton} 
+              onPress={() => setFilterType(prev => prev === "month" ? "week" : "month")}
+            >
+              <Text style={styles.lastWeekText}>
+                {filterType === "month" ? "This Month" : "This Week"}
+              </Text>
+            </TouchableOpacity>
+
         </View>
         <FlatList
           data={records}

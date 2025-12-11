@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 40,
   },
-headerContainer: {
+  headerContainer: {
   flexDirection: 'row',
   gap: 5,
   // justifyContent: 'center', 
@@ -333,15 +333,13 @@ headerContainer: {
     marginTop: 8,
   },
 
-  // --- AI BOX STYLES ---
   aiContainer: {
     marginTop: 20,
     padding: 18,
     borderRadius: 18,
-    // A subtle border to make it stand out as "special"
     borderWidth: 1,
     borderColor: "#6a4cff", 
-    backgroundColor: "rgba(106, 76, 255, 0.1)", // Low opacity version of your accent color
+    backgroundColor: "rgba(106, 76, 255, 0.1)", 
   },
   
   aiHeaderRow: {
