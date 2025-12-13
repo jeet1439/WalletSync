@@ -10,7 +10,7 @@ import {
   Dimensions,
   FlatList,
   Modal,
-  TextInput
+  TextInput,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -19,11 +19,13 @@ import firestore, { Timestamp } from "@react-native-firebase/firestore";
 import { Ionicons } from '@expo/vector-icons';
 import CustomAlert from '../Components/CustomAlert';
 import { UserContext } from '../context/UserContext';
+import { StatusBar } from 'react-native';
 
 
 
 const { width, height } = Dimensions.get("window");
-
+const wp = (p) => (width * p) / 100;   // width percentage
+const hp = (p) => (height * p) / 100; 
 
 const REASONS = ["Tickets", "Food", "Clothes", "Other"];
 
@@ -290,6 +292,11 @@ useEffect(() => {
 
   return (
     <View style={styles.container}>
+      <StatusBar
+      translucent
+      backgroundColor="transparent"
+      barStyle="light-content"
+    />
 
       <View style={styles.headerContainer}>
         <View style={{ flexDirection: 'row' }}>
@@ -475,179 +482,195 @@ useEffect(() => {
   );
 };
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0b051dff',
-    paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingHorizontal: wp(5),
+    paddingTop: hp(4),
   },
+
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: hp(2),
     justifyContent: 'space-between',
   },
+
   profileImage: {
-    width: 55,
-    height: 55,
-    borderRadius: 30,
-    marginRight: 10,
+    width: wp(14),
+    height: wp(14),
+    borderRadius: wp(7),
+    marginRight: wp(3),
   },
+
   helloText: {
-    fontSize: 16,
+    fontSize: wp(4),
     color: '#f3f3f3ff',
   },
+
   nameText: {
-    fontSize: 20,
+    fontSize: wp(5),
     fontWeight: '700',
     color: '#fff',
   },
+
   iconRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: wp(3),
   },
+
   iconButton: {
     backgroundColor: '#381a65',
-    padding: 10,
-    borderRadius: 30,
+    padding: wp(3),
+    borderRadius: wp(8),
   },
+
   overviewSection: {
-    width: width - 60,
-    marginHorizontal: 10,
+    width: width - wp(15),
+    marginHorizontal: wp(2),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: hp(1),
   },
+
   overviewTitle: {
-    fontSize: 22,
+    fontSize: wp(6),
     fontWeight: '700',
     color: '#fff',
   },
+
   overviewButton: {
-    fontSize: 14,
+    fontSize: wp(3.7),
     color: '#b6b6b6ff',
     fontWeight: '500',
   },
+
   flatListContainer: {
-    height: 210,
-    marginBottom: 20,
+    height: hp(27),
+    marginBottom: hp(2),
   },
 
   cardContainer: {
-    marginHorizontal: 5,
-    width: width - 50,
-    height: 210,
-    borderRadius: 20,
-    padding: 20,
+    marginHorizontal: wp(2),
+    width: width - wp(12),
+    height: hp(27),
+    borderRadius: wp(5),
+    padding: wp(5),
     overflow: "hidden",
-
   },
+
   cardImage: {
-    borderRadius: 14,
+    borderRadius: wp(5),
     resizeMode: "cover",
   },
+
   monthText: {
-    fontSize: 22,
+    fontSize: wp(6),
     color: "#fff",
     fontWeight: "700",
   },
+
   bottomRow: {
     position: "absolute",
-    bottom: 20,
-    left: 20,
-    right: 20,
+    bottom: hp(2),
+    left: wp(5),
+    right: wp(5),
     flexDirection: "row",
     justifyContent: "space-between",
   },
+
   label: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: wp(3.7),
     opacity: 0.8,
   },
+
   value: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: wp(5),
     fontWeight: "700",
   },
+
   transactionContainer: {
     position: "absolute",
     bottom: 0,
     height: "50%",
-    width: width - 50,
+    width: width - wp(12),
     alignSelf: 'center',
-    marginHorizontal: 30,
-    borderWidth: 1,
     backgroundColor: "rgba(28, 14, 53, 0.85)",
     borderColor: "rgba(255, 255, 255, 0.2)",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    borderBottomWidth: 0,
+    borderTopLeftRadius: wp(5),
+    borderTopRightRadius: wp(5),
+    paddingHorizontal: wp(5),
+    paddingTop: hp(2),
   },
+
   transactionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: hp(2),
   },
+
   historyTitle: {
-    fontSize: 22,
+    fontSize: wp(6),
     fontWeight: '700',
     color: '#fff',
   },
+
   lastWeekButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#381A65',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderRadius: wp(5),
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(0.7),
   },
+
   lastWeekText: {
     color: '#b6b6b6ff',
-    fontSize: 14,
+    fontSize: wp(3.7),
     fontWeight: '500',
   },
+
   transactionItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 18,
+    marginBottom: hp(2),
   },
 
   transactionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    marginRight: 15,
+    width: wp(10),
+    height: wp(10),
+    borderRadius: wp(2),
+    marginRight: wp(4),
   },
 
   transactionName: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: wp(4),
     fontWeight: "600",
   },
 
   transactionType: {
     color: "#b6b6b6",
-    fontSize: 13,
-    marginTop: 3,
+    fontSize: wp(3.4),
+    marginTop: hp(0.3),
   },
 
   transactionAmount: {
-    color: "#ff6b6b",
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: wp(4),
   },
 
   transactionTime: {
     color: "#b6b6b6",
-    fontSize: 12,
-    marginTop: 3,
+    fontSize: wp(3),
+    marginTop: hp(0.3),
   },
+
   modalWrapper: {
     flex: 1,
     justifyContent: "center",
@@ -658,33 +681,28 @@ const styles = StyleSheet.create({
   modalBox: {
     width: "85%",
     backgroundColor: "#1c0e35",
-    padding: 20,
-    borderRadius: 15,
+    padding: wp(5),
+    borderRadius: wp(4),
     elevation: 10,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.2)",
   },
-  titleContainer: {
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
+
   modalTitle: {
-    fontSize: 20,
+    fontSize: wp(5),
     fontWeight: "700",
     color: "#fff",
-    paddingVertical: '7',
+    marginBottom: hp(1),
     textAlign: "center",
   },
 
   input: {
     backgroundColor: "#381A65",
-    padding: 12,
+    padding: wp(3.5),
     color: "#fff",
-    fontSize: 16,
-    borderRadius: 10,
-    marginBottom: 18,
+    fontSize: wp(4),
+    borderRadius: wp(3),
+    marginBottom: hp(2),
   },
 
   buttonRow: {
@@ -695,44 +713,45 @@ const styles = StyleSheet.create({
   cancelBtn: {
     flex: 1,
     backgroundColor: "#555",
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: hp(1.5),
+    borderRadius: wp(3),
     alignItems: "center",
-    marginRight: 10,
+    marginRight: wp(2),
   },
 
   saveBtn: {
     flex: 1,
     backgroundColor: "#6b4ce6",
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: hp(1.5),
+    borderRadius: wp(3),
     alignItems: "center",
-    marginLeft: 10,
+    marginLeft: wp(2),
   },
 
   cancelText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: wp(4),
   },
 
   saveText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: wp(4),
     fontWeight: "700",
   },
+
   toggleWrapper: {
     flexDirection: "row",
     backgroundColor: "#2d1750",
-    padding: 4,
-    borderRadius: 20,
-    width: 140,
+    padding: wp(1),
+    borderRadius: wp(5),
+    width: wp(38),
     justifyContent: "space-between",
   },
 
   sliderOption: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: hp(1),
+    borderRadius: wp(5),
     alignItems: "center",
   },
 
@@ -742,7 +761,7 @@ const styles = StyleSheet.create({
 
   sliderText: {
     color: "#b6b6b6",
-    fontSize: 14,
+    fontSize: wp(3.5),
     fontWeight: "600",
   },
 
@@ -750,19 +769,19 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700",
   },
+
   reasonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 15,
-    marginTop: 10,
+    marginBottom: hp(2),
+    marginTop: hp(1),
   },
 
   reasonButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(3),
+    borderRadius: wp(3),
     backgroundColor: "#2d1750",
-    marginHorizontal: 2,
   },
 
   reasonButtonSelected: {
@@ -771,15 +790,11 @@ const styles = StyleSheet.create({
 
   reasonText: {
     color: "#fff",
-    fontSize: 13,
+    fontSize: wp(3.5),
   },
 
   reasonTextSelected: {
-    fontWeight: "bold",
-    color: "#fff",
+    fontWeight: "700",
   },
-
-
 });
-
 export default Home;

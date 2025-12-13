@@ -14,7 +14,7 @@ import firestore from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 
 export default function Login() {
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [confirm, setConfirm] = useState(null);
   const navigation = useNavigation();
@@ -23,7 +23,8 @@ export default function Login() {
   const signInWithPhoneNumber = async () => {
     try {
       setCodeSent(true);
-      const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
+      const fullPhone = `+91${phone}`;
+      const confirmation = await auth().signInWithPhoneNumber(fullPhone);
       setConfirm(confirmation);
       setCodeSent(false);
     } catch (err) {
@@ -36,13 +37,13 @@ export default function Login() {
     try {
       setCodeSent(true);
       const userCredential = await confirm.confirm(code);
-      console.log(userCredential);
       const user = userCredential.user;
 
       const userDoc = await firestore().collection('users').doc(user.uid).get();
       setCodeSent(false);
+
       if (userDoc.exists && userDoc.data()) {
-      navigation.navigate("Dashboard");
+        navigation.navigate("Dashboard");
       } else {
         navigation.navigate("Details", { uid: user.uid });
       }
@@ -52,7 +53,6 @@ export default function Login() {
       console.log('Invalid code');
     }
   };
-
 
   return (
     <KeyboardAvoidingView
@@ -64,45 +64,45 @@ export default function Login() {
           <Text style={styles.title}>Login</Text>
           <Text style={styles.subtitle}>Enter your phone number to continue</Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your number"
-            placeholderTextColor="#888"
-            keyboardType="phone-pad"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-          />
+          <View style={styles.phoneRow}>
+            <View style={styles.prefixBox}>
+              <Text style={styles.prefixText}>+91</Text>
+            </View>
+
+            <TextInput
+              style={styles.phoneInput}
+              placeholder="Enter your number"
+              placeholderTextColor="#888"
+              keyboardType="number-pad"
+              maxLength={10}
+              value={phone}
+              onChangeText={setPhone}
+            />
+          </View>
 
           <TouchableOpacity 
-          disabled={codesent}
-          style={styles.button} onPress={signInWithPhoneNumber}>
+            disabled={codesent}
+            style={styles.button}
+            onPress={signInWithPhoneNumber}
+          >
             <Text style={styles.buttonText}>
-              {
-                codesent == true ? (                  
-                <ActivityIndicator
-                  size={'small'}
-                  color={'#fff'}
-                />) : 'Get Otp'
-              }
+              {codesent ? (
+                <ActivityIndicator size={'small'} color={'#fff'} />
+              ) : 'Get OTP'}
             </Text>
           </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.innerContainer}>
           <Text style={styles.title}>Verify Code</Text>
-          <Text style={styles.subtitle}>
-            Please enter the code we just sent to your Number
-          </Text>
+          <Text style={styles.subtitle}>Enter the code sent to your number</Text>
+
           <View style={styles.otpContainer}>
-            {Array(6)
-              .fill(0)
-              .map((_, i) => (
-                <View key={i} style={styles.otpBox}>
-                  <Text style={styles.otpText}>
-                    {code[i] ? code[i] : ''}
-                  </Text>
-                </View>
-              ))}
+            {Array(6).fill(0).map((_, i) => (
+              <View key={i} style={styles.otpBox}>
+                <Text style={styles.otpText}>{code[i] || ''}</Text>
+              </View>
+            ))}
           </View>
 
           <TextInput
@@ -116,14 +116,9 @@ export default function Login() {
 
           <TouchableOpacity style={styles.button} onPress={confirmCode}>
             <Text style={styles.buttonText}>
-              {
-                codesent == true ? (
-                  <ActivityIndicator
-                  size={'small'}
-                  color={'#fff'}/>
-                ) : 
-                'Verify'
-              }
+              {codesent ? (
+                <ActivityIndicator size={'small'} color={'#fff'} />
+              ) : 'Verify'}
             </Text>
           </TouchableOpacity>
 
@@ -139,7 +134,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0b051dff', 
+    backgroundColor: '#0b051dff',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 10,
@@ -155,30 +150,43 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#94A3B8',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 20,
   },
-  emailText: {
-    color: '#6366F1', // Indigo blue accent
-    fontWeight: '500',
-    fontSize: 15,
-    marginBottom: 30,
-  },
-  input: {
+  phoneRow: {
+    flexDirection: 'row',
     width: '90%',
-    borderWidth: 1,
-    borderColor: '#1E293B',
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 16,
-    marginVertical: 20,
-    backgroundColor: '#1E293B',
-    color: '#E2E8F0',
+    alignItems: 'center',
   },
+  prefixBox: {
+    padding: 14,
+    backgroundColor: '#1E293B',
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  prefixText: {
+    fontSize: 16,
+    color: '#E2E8F0',
+    fontWeight: '600'
+  },
+  phoneInput: {
+    flex: 1,
+    padding: 14,
+    backgroundColor: '#1E293B',
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+    color: '#E2E8F0',
+    fontSize: 16,
+  },
+
   button: {
-    backgroundColor: '#7F00FF', 
+    backgroundColor: '#7F00FF',
     width: '90%',
     paddingVertical: 14,
     borderRadius: 12,
@@ -194,6 +202,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
   },
+
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',

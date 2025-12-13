@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { View, ActivityIndicator, ImageBackground, Text } from "react-native";
-
+import { SafeAreaView } from "react-native-safe-area-context";
 import auth from "@react-native-firebase/auth";
 import Login from "./src/Login";
 import Details from "./src/Details";
@@ -15,6 +15,8 @@ import Tabs from "./src/Navigator/Tabs";
 import UserProvider from "./src/context/UserContext";
 import { UserContext } from "./src/context/UserContext";
 import Privacy from "./src/Screens/Privacy";
+
+
 
 
 const Stack = createStackNavigator();
@@ -84,6 +86,7 @@ if (loading) {
 }
 
   return (
+  <SafeAreaView style={{ flex: 1 }} >
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName={user ? "Dashboard" : "Login"}
@@ -104,6 +107,7 @@ if (loading) {
       />
       </Stack.Navigator>
     </NavigationContainer>
+    </SafeAreaView>
   );
 } 
 
