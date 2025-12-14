@@ -341,7 +341,7 @@ useEffect(() => {
         <View style={{ flexDirection: 'row' }}>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
             <Image
-              source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuNhTZJTtkR6b-ADMhmzPvVwaLuLdz273wvQ&s' }}
+              source={{ uri: 'https://i.pinimg.com/736x/ae/a7/a9/aea7a9551cda1f88cc5e6e7ea52709f1.jpg' }}
               style={styles.profileImage}
             />
           </TouchableOpacity>

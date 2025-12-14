@@ -97,7 +97,7 @@ const Profile = () => {
             source={{
               uri:
                 user?.photoURL ||
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuNhTZJTtkR6b-ADMhmzPvVwaLuLdz273wvQ&s",
+                "https://i.pinimg.com/736x/ae/a7/a9/aea7a9551cda1f88cc5e6e7ea52709f1.jpg",
             }}
             style={styles.avatar}
           />

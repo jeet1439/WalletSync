@@ -86,7 +86,7 @@ if (loading) {
 }
 
   return (
-  <SafeAreaView style={{ flex: 1 }} >
+  <SafeAreaView style={{ flex: 1, backgroundColor: '#0b051dff' }} >
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName={user ? "Dashboard" : "Login"}
