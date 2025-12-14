@@ -11,19 +11,22 @@ export default function UserProvider({ children }) {
   useEffect(() => {
     let unsubscribeFirestore = null;
 
-    const unsubscribeAuth = auth().onAuthStateChanged(async (currentUser) => {
+    const unsubscribeAuth = auth().onAuthStateChanged((currentUser) => {
       if (currentUser) {
         setLoading(true);
+
         unsubscribeFirestore = firestore()
           .collection("users")
           .doc(currentUser.uid)
           .onSnapshot(
             (doc) => {
-              if (!doc.exists) {
-                console.log("User document does NOT exist in Firestore");
-                setUserData(null);
+              if (doc.exists) {
+                const data = doc.data();
+                setUserData(data);
+                // console.log("User data:", data); 
               } else {
-                setUserData(doc.data());
+                console.log("User document does not exist");
+                setUserData(null);
               }
               setLoading(false);
             },
@@ -33,13 +36,16 @@ export default function UserProvider({ children }) {
             }
           );
       } else {
-        // When logged out
+        // logout
+        if (unsubscribeFirestore) {
+          unsubscribeFirestore();
+          unsubscribeFirestore = null;
+        }
         setUserData(null);
         setLoading(false);
       }
     });
 
-    // Cleanup both listeners
     return () => {
       unsubscribeAuth();
       if (unsubscribeFirestore) unsubscribeFirestore();

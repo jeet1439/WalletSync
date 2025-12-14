@@ -48,8 +48,12 @@ const getReasonIcon = (reason) => {
   }
 };
 
-const TransactionItem = ({ item }) => (
-  <View style={styles.transactionItem}>
+const TransactionItem = ({ item, onLongPress }) => (
+   <TouchableOpacity
+    activeOpacity={0.7}
+    onLongPress={onLongPress}
+    style={styles.transactionItem}
+  >
     <Image
       source={getReasonIcon(item.reason)}
       style={styles.transactionIcon}
@@ -73,7 +77,8 @@ const TransactionItem = ({ item }) => (
         {item.timestamp?.toDate().toLocaleString()}
       </Text>
     </View>
-  </View>
+
+  </TouchableOpacity>
 );
 
 const CardItem = ({ item }) => (
@@ -118,6 +123,8 @@ const Home = () => {
   const navigation = useNavigation();
   const [alert, setAlert] = useState(null);
   const { userData } = useContext(UserContext);
+
+  console.log(userData)
 
   const showAlert = (type, msg) => {
     setAlert({ type, msg });
@@ -211,9 +218,6 @@ const Home = () => {
   }
 };
 
-
-
-
   const fetchMonthlyRecords = () => {
   try {
     const user = auth().currentUser;
@@ -274,6 +278,41 @@ const Home = () => {
     console.log(error);
     showAlert("error", "Something went wrong!");
   }
+};
+
+const deleteTransaction = (transactionId) => {
+  Alert.alert(
+    "Delete Transaction",
+    "Are you sure you want to delete this transaction?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const user = auth().currentUser;
+            if (!user) return;
+
+            const uid = user.uid;
+            const currentYear = new Date().getFullYear().toString();
+
+            await firestore()
+              .collection("records")
+              .doc(uid)
+              .collection(currentYear)
+              .doc(transactionId)
+              .delete();
+
+            showAlert("success", "Transaction deleted");
+          } catch (error) {
+            console.log(error);
+            showAlert("error", "Failed to delete transaction");
+          }
+        },
+      },
+    ]
+  );
 };
 
 
@@ -355,7 +394,12 @@ useEffect(() => {
         <FlatList
           data={records}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <TransactionItem item={item} />}
+          renderItem={({ item }) => (
+            <TransactionItem
+              item={item}
+              onLongPress={() => deleteTransaction(item.id)}
+            />
+          )}
           showsVerticalScrollIndicator={false}
           style={{ marginBottom: height * 0.10 }}
         />
