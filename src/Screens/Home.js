@@ -351,11 +351,15 @@ useEffect(() => {
           </View>
         </View>
         <View style={styles.iconRow}>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity 
+          onPress={() => navigation.navigate("TransactionList")}
+          style={styles.iconButton}>
             <MaterialCommunityIcons name="apps" size={22} color="#fff" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Notifications")}
+           style={styles.iconButton}>
             <MaterialCommunityIcons name="email-outline" size={22} color="#fff" />
           </TouchableOpacity>
         </View>

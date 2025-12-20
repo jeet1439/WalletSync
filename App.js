@@ -15,8 +15,8 @@ import Tabs from "./src/Navigator/Tabs";
 import UserProvider from "./src/context/UserContext";
 import { UserContext } from "./src/context/UserContext";
 import Privacy from "./src/Screens/Privacy";
-
-
+import TransactionList from "./src/Screens/TransactionList";
+import Notification from "./src/Screens/Notification";
 
 
 const Stack = createStackNavigator();
@@ -103,6 +103,16 @@ if (loading) {
         <Stack.Screen 
         name="Privacy" 
         component={Privacy} 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="TransactionList" 
+        component={TransactionList} 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="Notifications" 
+        component={Notification} 
         options={{ headerShown: false }} 
       />
       </Stack.Navigator>
