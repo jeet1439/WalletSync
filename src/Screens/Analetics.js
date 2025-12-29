@@ -5,18 +5,18 @@ import {
   StyleSheet,
   ScrollView,
   Image,
-  Alert,
   Dimensions,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
-
 const { width, height } = Dimensions.get('window');
 const wp = (p) => (width * p) / 100;
 const hp = (p) => (height * p) / 100;
 
+// 1. Define Tabs Constant for easy access
+const TABS = ['Weekly', 'Monthly', 'Yearly'];
 
 const getWeekOfMonth = (date) => {
   const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -25,7 +25,10 @@ const getWeekOfMonth = (date) => {
 };
 
 const Analetics = () => {
-  const [activeTab, setActiveTab] = useState('Monthly');
+  const [activeTab, setActiveTab] = useState('Weekly');
+  
+  // 2. Add state to track the start of the touch
+  const [touchStart, setTouchStart] = useState(null);
 
   const [analyticsData, setAnalyticsData] = useState({
     Weekly: { labels: [], values: [] },
@@ -33,10 +36,10 @@ const Analetics = () => {
     Yearly: { labels: [], values: [] },
   });
 
+  // ... (Keep existing fetchAnalyticsData and processRecords logic exactly the same) ...
   const fetchAnalyticsData = () => {
     const user = auth().currentUser;
     if (!user) return;
-
     const uid = user.uid;
     const currentYear = new Date().getFullYear().toString();
 
@@ -45,8 +48,7 @@ const Analetics = () => {
         .collection('records')
         .doc(uid)
         .collection(currentYear)
-        .onSnapshot(
-          (snapshot) => {
+        .onSnapshot((snapshot) => {
             const records = snapshot.docs
               .map((doc) => ({
                 id: doc.id,
@@ -61,7 +63,6 @@ const Analetics = () => {
           },
           (err) => console.log('Firestore fetch error:', err),
         );
-
       return unsubscribe;
     } catch (e) {
       console.log(e);
@@ -79,7 +80,6 @@ const Analetics = () => {
       const y = item.date.getFullYear().toString();
       yearlyData[y] = (yearlyData[y] || 0) + item.amount;
     });
-
     const years = Object.keys(yearlyData).sort();
     const yearly = {
       labels: years,
@@ -87,19 +87,12 @@ const Analetics = () => {
     };
 
     // MONTHLY
-    const monthNames = [
-      'Jan','Feb','Mar','Apr','May','Jun',
-      'Jul','Aug','Sep','Oct','Nov','Dec'
-    ];
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const monthlyData = {};
-
-    records
-      .filter((item) => item.date.getFullYear() === currentYear)
-      .forEach((item) => {
+    records.filter((item) => item.date.getFullYear() === currentYear).forEach((item) => {
         const m = monthNames[item.date.getMonth()];
         monthlyData[m] = (monthlyData[m] || 0) + item.amount;
-      });
-
+    });
     const monthly = {
       labels: monthNames,
       values: monthNames.map((m) => monthlyData[m] || 0),
@@ -107,18 +100,11 @@ const Analetics = () => {
 
     // WEEKLY
     const weeklyData = {};
-
-    records
-      .filter(
-        (item) =>
-          item.date.getFullYear() === currentYear &&
-          item.date.getMonth() === currentMonth,
-      )
+    records.filter((item) => item.date.getFullYear() === currentYear && item.date.getMonth() === currentMonth)
       .forEach((item) => {
         const week = getWeekOfMonth(item.date);
         weeklyData[week] = (weeklyData[week] || 0) + item.amount;
       });
-
     const weeklyLabels = ['W1', 'W2', 'W3', 'W4'];
     const weekly = {
       labels: weeklyLabels,
@@ -133,51 +119,79 @@ const Analetics = () => {
     return () => unsub && unsub();
   }, []);
 
+  // 3. Swipe Logic
+  const handleTouchStart = (e) => {
+    setTouchStart(e.nativeEvent.pageX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!touchStart) return;
+    
+    const touchEnd = e.nativeEvent.pageX;
+    const swipeDistance = touchStart - touchEnd;
+    const minSwipeDist = 50; // Minimum distance to count as a swipe
+
+    // If swipe distance is significant
+    if (Math.abs(swipeDistance) > minSwipeDist) {
+      const currentIndex = TABS.indexOf(activeTab);
+      
+      if (swipeDistance > 0) {
+        // Swiped LEFT -> Go to Next Tab
+        if (currentIndex < TABS.length - 1) {
+          setActiveTab(TABS[currentIndex + 1]);
+        }
+      } else {
+        // Swiped RIGHT -> Go to Previous Tab
+        if (currentIndex > 0) {
+          setActiveTab(TABS[currentIndex - 1]);
+        }
+      }
+    }
+    setTouchStart(null); // Reset
+  };
+
   const chart = analyticsData[activeTab];
   const maxValue = chart.values.length > 0 ? Math.max(...chart.values) : 1;
   const total = chart.values.reduce((a, b) => a + b, 0);
 
   const getAiInsight = (tab) => {
-    const now = new Date();
-    const data = analyticsData[tab];
-
-    if (!data || data.values.length === 0 || total === 0)
-      return 'No sufficient data to generate insights yet.';
-
-    if (tab === 'Monthly') {
-      const currentMonthTotal = data.values[now.getMonth()];
-      const avg =
-        data.values.reduce((s, v) => s + v, 0) / data.values.length;
-
-      if (currentMonthTotal > avg * 1.2) {
-        return `Your current month's spending (₹${currentMonthTotal}) is above your average.`;
-      }
-      return 'Your monthly spending is stable.';
-    }
-
-    if (tab === 'Weekly') {
-      const maxIndex = data.values.indexOf(maxValue);
-      const peak = data.labels[maxIndex];
-      return `Peak spending was in ${peak} at ₹${maxValue}.`;
-    }
-
-    if (tab === 'Yearly') {
-      const last = data.values[data.values.length - 1];
-      const prev = data.values[data.values.length - 2] || last;
-      const change = prev === 0 ? 0 : ((last - prev) / prev) * 100;
-
-      if (change > 5) return `Yearly spending increased by ${change.toFixed(1)}%.`;
-      if (change < -5)
-        return `Great! Spending decreased by ${Math.abs(change).toFixed(1)}%.`;
-
-      return `Yearly spending is stable (${change.toFixed(1)}% change).`;
-    }
-
-    return 'Insight unavailable.';
+     // ... (Keep existing AI logic) ...
+     const now = new Date();
+     const data = analyticsData[tab];
+ 
+     if (!data || data.values.length === 0 || total === 0)
+       return 'No sufficient data to generate insights yet.';
+ 
+     if (tab === 'Monthly') {
+       const currentMonthTotal = data.values[now.getMonth()];
+       const avg = data.values.reduce((s, v) => s + v, 0) / data.values.length;
+       if (currentMonthTotal > avg * 1.2) return `Your current month's spending (₹${currentMonthTotal}) is above your average.`;
+       return 'Your monthly spending is stable.';
+     }
+     if (tab === 'Weekly') {
+       const maxIndex = data.values.indexOf(maxValue);
+       const peak = data.labels[maxIndex];
+       return `Peak spending was in ${peak} at ₹${maxValue}.`;
+     }
+     if (tab === 'Yearly') {
+       const last = data.values[data.values.length - 1];
+       const prev = data.values[data.values.length - 2] || last;
+       const change = prev === 0 ? 0 : ((last - prev) / prev) * 100;
+       if (change > 5) return `Yearly spending increased by ${change.toFixed(1)}%.`;
+       if (change < -5) return `Great! Spending decreased by ${Math.abs(change).toFixed(1)}%.`;
+       return `Yearly spending is stable (${change.toFixed(1)}% change).`;
+     }
+     return 'Insight unavailable.';
   };
 
   return (
-    <ScrollView style={styles.container}>
+    // 4. Attach Touch Listeners to the ScrollView
+    <ScrollView 
+      style={styles.container}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      scrollEventThrottle={16} // Helps with smoothness
+    >
       {/* HEADER */}
       <View style={styles.headerContainer}>
         <Text style={styles.header}>Analytics</Text>
@@ -188,7 +202,7 @@ const Analetics = () => {
       </View>
 
       <View style={styles.tabRow}>
-        {['Weekly', 'Monthly', 'Yearly'].map((tab) => (
+        {TABS.map((tab) => (
           <TouchableOpacity
             key={tab}
             onPress={() => setActiveTab(tab)}
@@ -244,137 +258,116 @@ const Analetics = () => {
 export default Analetics;
 
 const styles = StyleSheet.create({
+  // ... (Your existing styles remain exactly the same)
   container: {
     flex: 1,
     backgroundColor: '#0b051d',
     paddingHorizontal: wp(5),
     paddingTop: hp(4),
   },
-
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: wp(2),
+  headerContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: wp(2) 
   },
-
-  header: {
-    color: '#fff',
-    fontSize: wp(7),
-    fontWeight: '700',
+  header: { 
+    color: '#fff', 
+    fontSize: wp(7), 
+    fontWeight: '700' 
   },
-
-  customIcon: {
-    width: wp(10),
-    height: wp(10),
+  customIcon: { 
+    width: wp(10), 
+    height: wp(10) 
   },
-
-  tabRow: {
-    flexDirection: 'row',
-    backgroundColor: '#1c1533',
-    borderRadius: wp(4),
-    padding: wp(1),
-    marginTop: hp(3),
+  tabRow: { 
+    flexDirection: 'row', 
+    backgroundColor: '#1c1533', 
+    borderRadius: wp(4), 
+    padding: wp(1), 
+    marginTop: hp(3) 
   },
-
-  tab: {
-    flex: 1,
-    paddingVertical: hp(1.8),
-    alignItems: 'center',
-    borderRadius: wp(3),
+  tab: { 
+    flex: 1, 
+    paddingVertical: hp(1.8), 
+    alignItems: 'center', 
+    borderRadius: wp(3) 
   },
-
-  activeTab: {
-    backgroundColor: '#6a4cff',
+  activeTab: { 
+    backgroundColor: '#6a4cff' 
   },
-
-  tabText: {
-    fontSize: wp(4),
-    color: '#b6b3cc',
+  tabText: { 
+    fontSize: wp(4), 
+    color: '#b6b3cc' 
   },
-
-  activeTabText: {
-    color: '#fff',
-    fontWeight: '600',
+  activeTabText: { 
+    color: '#fff', 
+    fontWeight: '600' 
   },
-
-  chartTitle: {
-    color: '#dcd9ff',
-    fontSize: wp(5),
-    marginTop: hp(3),
+  chartTitle: { 
+    color: '#dcd9ff', 
+    fontSize: wp(5), 
+    marginTop: hp(3) },
+  chartContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-around', 
+    alignItems: 'flex-end', 
+    height: hp(25), 
+    marginTop: hp(1) 
   },
-
-  chartContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    height: hp(25),
-    marginTop: hp(1),
+  barColumn: { 
+    alignItems: 'center' 
   },
-
-  barColumn: {
-    alignItems: 'center',
-  },
-
   bar: {
-    width: wp(5),
-    backgroundColor: '#6a4cff',
-    borderRadius: wp(2),
+     width: wp(5), 
+     backgroundColor: '#6a4cff', 
+     borderRadius: wp(2) 
+    },
+  barLabel: { 
+    marginTop: hp(1), 
+    color: '#ccc', 
+    fontSize: wp(3.5) 
   },
-
-  barLabel: {
-    marginTop: hp(1),
-    color: '#ccc',
-    fontSize: wp(3.5),
+  card: { 
+    backgroundColor: 'rgba(28, 14, 53, 0.85)', 
+    padding: wp(5), 
+    borderRadius: wp(5), 
+    marginTop: hp(3) 
   },
-
-  card: {
-    backgroundColor: 'rgba(28, 14, 53, 0.85)',
-    padding: wp(5),
-    borderRadius: wp(5),
-    marginTop: hp(3),
+  cardTitle: { 
+    color: '#8181a8', 
+    fontSize: wp(4) 
   },
-
-  cardTitle: {
-    color: '#8181a8',
-    fontSize: wp(4),
+  cardValue: { 
+    color: '#fff', 
+    fontSize: wp(7), 
+    fontWeight: '700', 
+    marginTop: hp(1) 
   },
-
-  cardValue: {
-    color: '#fff',
-    fontSize: wp(7),
-    fontWeight: '700',
-    marginTop: hp(1),
-  },
-
-  aiContainer: {
-    marginTop: hp(3),
-    padding: wp(4),
-    borderRadius: wp(5),
-    borderWidth: 1,
+  aiContainer: { 
+    marginTop: hp(3), 
+    padding: wp(4), 
+    borderRadius: wp(5), 
+    borderWidth: 1, 
     borderColor: '#6a4cff',
-    backgroundColor: 'rgba(106, 76, 255, 0.1)',
+    backgroundColor: 'rgba(106, 76, 255, 0.1)' 
   },
-
-  aiHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(1),
+  aiHeaderRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: hp(1) 
   },
-
-  aiIcon: {
-    fontSize: wp(5),
-    marginRight: wp(2),
+  aiIcon: { 
+    fontSize: wp(5), 
+    marginRight: wp(2) 
   },
-
-  aiTitle: {
-    color: '#fff',
-    fontSize: wp(4.5),
-    fontWeight: '600',
+  aiTitle: { 
+    color: '#fff', 
+    fontSize: wp(4.5), 
+    fontWeight: '600' 
   },
-
-  aiBody: {
-    color: '#dcd9ff',
-    fontSize: wp(3.8),
-    lineHeight: hp(2.5),
+  aiBody: { 
+    color: '#dcd9ff', 
+    fontSize: wp(3.8), 
+    ineHeight: hp(2.5) 
   },
 });
